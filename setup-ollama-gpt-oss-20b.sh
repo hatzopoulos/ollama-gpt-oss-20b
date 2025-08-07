@@ -11,11 +11,13 @@ LOG_FILE=~/ollama.log
 echo "🔍 Checking for Homebrew..."
 if ! command -v brew &>/dev/null; then
     echo "🍺 Homebrew not found. Installing..."
-    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-    eval "$(/opt/homebrew/bin/brew shellenv)"
+    # Load Homebrew into PATH (dynamically based on install location)
+    BREW_PREFIX="$(/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" >/dev/null 2>&1; echo $(brew --prefix))"
+    echo "eval \"\$(${BREW_PREFIX}/bin/brew shellenv)\"" >> ~/.zprofile
+    eval "$(${BREW_PREFIX}/bin/brew shellenv)"
 else
     echo "✅ Homebrew is already installed."
+    #BREW_PREFIX=$(brew --prefix)
 fi
 
 # Step 2: Check for Ollama
@@ -61,5 +63,5 @@ echo "🛑 To stop the Ollama service later, run:"
 echo "    pkill -x ollama"
 echo ""
 echo " To completely uninstall ollama and the model data, run:"
-echo "    brew uninstall ollama && rm -rf \"~/Library/Application Support/Ollama\" && rm -f $LOG_FILE"
+echo "    brew uninstall ollama && rm -rf ~/Library/Application\ Support/Ollama && rm -f $LOG_FILE"
 echo ""
