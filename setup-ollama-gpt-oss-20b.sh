@@ -1,11 +1,14 @@
 #!/bin/bash
 
 # Simple setup for Ollama + gpt-oss:20b on macOS
+# Designed for beginner users
 
 set -e
 
-echo "🔍 Checking for Homebrew..."
+LOG_FILE=~/ollama.log
 
+# Step 1: Check for Homebrew
+echo "🔍 Checking for Homebrew..."
 if ! command -v brew &>/dev/null; then
     echo "🍺 Homebrew not found. Installing..."
     NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -15,27 +18,48 @@ else
     echo "✅ Homebrew is already installed."
 fi
 
-echo "📦 Installing Ollama..."
+# Step 2: Check for Ollama
+echo "🔍 Checking for Ollama..."
+if ! command -v ollama &>/dev/null; then
+    echo "📦 Ollama not found. Installing..."
+    brew install ollama
+else
+    echo "✅ Ollama is already installed."
+fi
 
-brew install ollama
+# Step 3: Check if ollama serve is already running
+echo "🔄 Checking if 'ollama serve' is already running..."
+if pgrep -x "ollama" > /dev/null; then
+    echo "🟢 Ollama service is already running."
+else
+    echo "🚀 Starting Ollama service in background..."
+    echo "📄 Logging output to $LOG_FILE"
+    nohup ollama serve > "$LOG_FILE" 2>&1 &
+    echo "⏳ Waiting a few seconds for the service to initialize..."
+    sleep 5
+fi
 
-echo "🚀 Starting Ollama service..."
-ollama serve &
-
-# Wait a bit to ensure service is ready
-sleep 5
-
+# Step 4: Pull the model
 echo "⬇️ Downloading gpt-oss:20b model (this may take a while)..."
-
 ollama run gpt-oss:20b
 
 echo ""
 echo "✅ Setup complete!"
 echo ""
-echo "💡 You can now chat with the model by running:"
+echo "👉 To chat with the model anytime, run:"
 echo "    ollama run gpt-oss:20b"
 echo ""
-echo "🧠 Tip: You can also use a GUI like Open WebUI (optional) for a better experience:"
+echo "💡 Optional GUI: Open WebUI"
 echo "    https://github.com/open-webui/open-webui"
 echo ""
-echo "📂 Model will be stored locally and used offline after download."
+echo "📝 If something doesn't work, check the log at:"
+echo "    $LOG_FILE"
+echo ""
+echo "📂 The model is stored locally and can be used offline."
+echo ""
+echo "🛑 To stop the Ollama service later, run:"
+echo "    pkill -x ollama"
+echo ""
+echo " To completely uninstall ollama and the model data, run:"
+echo "    brew uninstall ollama && rm -rf \"~/Library/Application Support/Ollama\" && rm -f $LOG_FILE"
+echo ""
